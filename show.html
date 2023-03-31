@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Display Firebase Storage Images</title>
+  </head>
+  <body>
+    <div id="image-container"></div>
+
+    <!-- Include the Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-storage.js"></script>
+    <script src="./config.js"></script>
+    <script>
+      // Get reference to HTML element for image container
+      const imageContainer = document.getElementById("image-container");
+
+      // Get reference to Firebase storage folder for images
+      const imageRef = storage.ref("images");
+
+      // Loop through images in folder and generate HTML elements
+      imageRef
+        .listAll()
+        .then((res) => {
+          res.items.forEach((itemRef) => {
+            // Get download URL for image
+            itemRef.getDownloadURL().then((url) => {
+              // Create new image element and set source to download URL
+              const image = document.createElement("img");
+              image.src = url;
+
+              // Add image element to container
+              imageContainer.appendChild(image);
+            });
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    </script>
+  </body>
+</html>

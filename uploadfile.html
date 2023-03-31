@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload File</title>
+</head>
+
+<body>
+    <h1>Upload File</h1>
+    <form>
+        <input type="file" id="fileInput" />
+        <button type="button" onclick="uploadFile()">Upload</button>
+    </form>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
+    <script src="./config.js"></script>
+    <script>
+        function uploadFile() {
+            const file = document.getElementById("fileInput").files[0];
+            const fileName = file.name;
+            const storageRef = storage.ref("files/" + fileName);
+            const uploadTask = storageRef.put(file);
+
+            uploadTask.on(
+                "state_changed",
+                function (snapshot) {
+                    // handle progress
+                },
+                function (error) {
+                    // handle error
+                    console.error(error);
+                },
+                function () {
+                    // handle success
+                    console.log("File uploaded successfully");
+                    window.location.href = "./display.html";
+                }
+            );
+        }
+    </script>
+</body>
+
+</html>

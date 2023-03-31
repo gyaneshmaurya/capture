@@ -1,0 +1,68 @@
+<html>
+  <head>
+    <title>Uploaded Files</title>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-storage.js"></script>
+  </head>
+
+  <body>
+    <style>
+      table,
+      th,
+      td {
+        border: 1px solid;
+      }
+    </style>
+    <h1>Uploaded Files</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>File Name</th>
+          <th>Upload Date</th>
+          <th>Download</th>
+        </tr>
+      </thead>
+      <tbody id="file-list"></tbody>
+    </table>
+    <script src="./config.js"></script>
+    <script>
+      const filesRef = storage.ref().child("files");
+
+      // List all files in the "files" folder
+      filesRef
+        .listAll()
+        .then(function (result) {
+          result.items.forEach(function (item) {
+            // Get file name and upload date
+            const fileName = item.name;
+            item.getMetadata().then(function (metadata) {
+              const uploadDate = metadata.timeCreated;
+
+              // Add file info to the table
+              const row = document.createElement("tr");
+              const fileNameCell = document.createElement("td");
+              fileNameCell.textContent = fileName;
+              const uploadDateCell = document.createElement("td");
+              uploadDateCell.textContent = uploadDate;
+              const downloadCell = document.createElement("td");
+              const downloadButton = document.createElement("button");
+              downloadButton.textContent = "Download";
+              downloadButton.onclick = function () {
+                item.getDownloadURL().then(function (url) {
+                  window.open(url, "_blank");
+                });
+              };
+              downloadCell.appendChild(downloadButton);
+              row.appendChild(fileNameCell);
+              row.appendChild(uploadDateCell);
+              row.appendChild(downloadCell);
+              document.getElementById("file-list").appendChild(row);
+            });
+          });
+        })
+        .catch(function (error) {
+          console.error(error);
+        });
+    </script>
+  </body>
+</html>
