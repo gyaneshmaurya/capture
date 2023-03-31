@@ -7,58 +7,49 @@ const firebaseConfig = {
     appId: "1:1053470437967:web:95d380f9033e295b17303a"
 };
 
-// Get a reference to Firebase storage
-const storageRef = firebase.storage().ref();
+firebase.initializeApp(firebaseConfig);
 
-// Get the file input element and upload button
-const fileInput = document.getElementById("fileInput");
-const uploadButton = document.getElementById("uploadButton");
+// Get references to DOM elements
+const captureButton = document.getElementById("capture");
+const canvas = document.getElementById("canvas");
 
-// Add event listener to the upload button
-uploadButton.addEventListener("click", () => {
-  // Get the file
-  const file = fileInput.files[0];
-
-  // Upload the file to Firebase storage
-  const fileRef = storageRef.child(file.name);
-  fileRef.put(file)
-    .then(() => {
-      // Get the download URL
-      fileRef.getDownloadURL()
-        .then((url) => {
-          // Save the URL to Firestore
-          firebase.firestore().collection("images").add({
-            url: url
-          })
-        })
-    })
-});
-
-
-
-
-
-
-
-
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const captureButton = document.getElementById('capture');
-
-navigator.mediaDevices.getUserMedia({ video: true })
+// Add event listener to capture button
+captureButton.addEventListener("click", () => {
+  // Get video stream from camera
+  navigator.mediaDevices.getUserMedia({ video: true })
     .then((stream) => {
-        video.srcObject = stream;
+      // Create video element and attach stream
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      video.play();
+
+      // Draw video stream to canvas
+      const context = canvas.getContext("2d");
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert canvas image to data URL
+      const dataURL = canvas.toDataURL("image/png");
+
+      // Upload image to Firebase Storage
+      const storageRef = firebase.storage().ref();
+      const imagesRef = storageRef.child("images");
+      const imageName = new Date().getTime() + ".png";
+      const imageRef = imagesRef.child(imageName);
+      imageRef.putString(dataURL, "data_url")
+        .then(() => {
+          console.log("Image uploaded successfully!");
+        })
+        .catch((error) => {
+          console.error("Error uploading image: ", error);
+        });
+
+      // Stop video stream
+      stream.getTracks().forEach((track) => {
+        track.stop();
+      });
     })
     .catch((error) => {
-        console.error(error);
+      console.error("Error accessing camera: ", error);
     });
-
-captureButton.addEventListener('click', () => {
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg');
-
-    const imageName = new Date().getTime() + '.jpg';
-    const storageRef = storage.ref('images/' + imageName);
-    const uploadTask = storageRef.putString(dataUrl, 'data_url');
 });
+
