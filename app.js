@@ -7,9 +7,38 @@ const firebaseConfig = {
     appId: "1:1053470437967:web:95d380f9033e295b17303a"
 };
 
-firebase.initializeApp(firebaseConfig);
+// Get a reference to Firebase storage
+const storageRef = firebase.storage().ref();
 
-const storage = firebase.storage();
+// Get the file input element and upload button
+const fileInput = document.getElementById("fileInput");
+const uploadButton = document.getElementById("uploadButton");
+
+// Add event listener to the upload button
+uploadButton.addEventListener("click", () => {
+  // Get the file
+  const file = fileInput.files[0];
+
+  // Upload the file to Firebase storage
+  const fileRef = storageRef.child(file.name);
+  fileRef.put(file)
+    .then(() => {
+      // Get the download URL
+      fileRef.getDownloadURL()
+        .then((url) => {
+          // Save the URL to Firestore
+          firebase.firestore().collection("images").add({
+            url: url
+          })
+        })
+    })
+});
+
+
+
+
+
+
 
 
 const video = document.getElementById('video');
