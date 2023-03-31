@@ -1,41 +1,67 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Selfie Uploader</title>
-    <style>
-      #canvas {
-        border: 1px solid black;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Selfie Uploader</h1>
-    <button id="capture">Take Selfie</button>
-    <canvas id="canvas" width="320" height="240"></canvas>
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
 
-    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+// Get references to DOM elements
+const captureButton = document.getElementById("capture");
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const preview = document.getElementById("preview");
 
-    <!-- Add Firebase products that you want to use -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+// Add event listener to capture button
+captureButton.addEventListener("click", () => {
+  // Get video stream from camera
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then((stream) => {
+      // Play video in video element
+      video.srcObject = stream;
+      video.play();
 
-    <!-- Your web app's Firebase configuration -->
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyCUJWIsj4vD7cFPqXDslLkkluKcdMWB2aM",
-        authDomain: "captureimg-919cc.firebaseapp.com",
-        projectId: "captureimg-919cc",
-        storageBucket: "captureimg-919cc.appspot.com",
-        messagingSenderId: "1053470437967",
-        appId: "1:1053470437967:web:95d380f9033e295b17303a"
-      };
+      // Show video element, hide capture button
+      video.classList.remove("hidden");
+      captureButton.classList.add("hidden");
 
-      // Initialize Firebase
-      firebase.initializeApp(firebaseConfig);
-    </script>
+      // Add event listener to video element to capture image
+      video.addEventListener("click", captureImage);
+    })
+    .catch((error) => {
+      console.error("Error accessing camera: ", error);
+    });
+});
 
-    <!-- JavaScript code -->
-    <script src="script.js"></script>
-  </body>
-</html>
+function captureImage() {
+  // Draw video frame to canvas
+  const context = canvas.getContext("2d");
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  // Convert canvas image to data URL
+  const dataURL = canvas.toDataURL("image/png");
+
+  // Upload image to Firebase Storage
+  const storageRef = firebase.storage().ref();
+  const imagesRef = storageRef.child("images");
+  const imageName = new Date().getTime() + ".png";
+  const imageRef = imagesRef.child(imageName);
+  imageRef.putString(dataURL, "data_url")
+    .then(() => {
+      console.log("Image uploaded successfully!");
+
+      // Hide video element, show preview image
+      video.classList.add("hidden");
+      preview.classList.remove("hidden");
+      preview.src = dataURL;
+    })
+    .catch((error) => {
+      console.error("Error uploading image: ", error);
+    });
+
+  // Remove event listener from video element
+  video.removeEventListener("click", captureImage);
+}
