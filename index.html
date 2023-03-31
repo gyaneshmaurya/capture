@@ -2,15 +2,40 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Camera Demo</title>
+    <title>Selfie Uploader</title>
+    <style>
+      #canvas {
+        border: 1px solid black;
+      }
+    </style>
   </head>
   <body>
-    <h1>Camera Demo</h1>
-    <button id="capture">Take Picture</button>
-    <canvas id="canvas" width="640" height="480"></canvas>
+    <h1>Selfie Uploader</h1>
+    <button id="capture">Take Selfie</button>
+    <canvas id="canvas" width="320" height="240"></canvas>
+
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+
+    <!-- Add Firebase products that you want to use -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
-    <script src="app.js"></script>
+
+    <!-- Your web app's Firebase configuration -->
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCUJWIsj4vD7cFPqXDslLkkluKcdMWB2aM",
+        authDomain: "captureimg-919cc.firebaseapp.com",
+        projectId: "captureimg-919cc",
+        storageBucket: "captureimg-919cc.appspot.com",
+        messagingSenderId: "1053470437967",
+        appId: "1:1053470437967:web:95d380f9033e295b17303a"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <!-- JavaScript code -->
+    <script src="script.js"></script>
   </body>
 </html>
