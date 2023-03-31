@@ -76,10 +76,12 @@
         imageRef
           .putString(dataURL, "data_url")
           .then(() => {
-            console.log("Image uploaded to Firebase storage.");
+            // console.log("Image uploaded to Firebase storage.");
+            alert("uploded");
           })
           .catch((error) => {
-            console.error("Error uploading image to Firebase storage: ", error);
+            // console.error("Error uploading image to Firebase storage: ", error);
+            alert("not uploded");
           });
       });
 
