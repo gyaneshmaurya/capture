@@ -1,21 +1,106 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <title>Webcam Streamer</title>
-    <style>
-      #video {
-        width: 640px;
-        height: 480px;
-      }
-    </style>
+    <meta charset="utf-8">
+    <title>Video Chat App</title>
   </head>
   <body>
-    <h1>Webcam Streamer</h1>
-    <video id="video" autoplay></video>
-    <button id="capture-btn">Take Picture</button>
-    <script src="https://www.gstatic.com/firebasejs/8.2.2/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.2.2/firebase-storage.js"></script>
-    <script src="app.js"></script>
+    <h1>Video Chat App</h1>
+    <div>
+      <video id="local-video" autoplay></video>
+    </div>
+    <div>
+      <video id="remote-video" autoplay></video>
+    </div>
+    <div>
+      <button id="start-call">Start Call</button>
+      <button id="end-call" disabled>End Call</button>
+    </div>
+    <script>
+      const firebaseConfig = {
+  // your Firebase configuration here
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+// Get references to HTML elements
+const localVideo = document.getElementById('local-video');
+const remoteVideo = document.getElementById('remote-video');
+const startCallButton = document.getElementById('start-call');
+const endCallButton = document.getElementById('end-call');
+
+let localStream;
+let remoteStream;
+let localPeerConnection;
+let remotePeerConnection;
+
+// Get user media
+navigator.mediaDevices.getUserMedia({
+  video: true,
+  audio: true
+}).then((stream) => {
+  // Display local video stream
+  localStream = stream;
+  localVideo.srcObject = localStream;
+}).catch((error) => {
+  console.error('Error getting user media:', error);
+});
+
+// Create and initialize local peer connection
+localPeerConnection = new RTCPeerConnection();
+localPeerConnection.onicecandidate = (event) => {
+  if (event.candidate) {
+    console.log('Local ICE candidate:', event.candidate);
+    remotePeerConnection.addIceCandidate(event.candidate);
+  }
+};
+localPeerConnection.ontrack = (event) => {
+  console.log('Local track:', event.track);
+  remoteVideo.srcObject = event.streams[0];
+  remoteStream = event.streams[0];
+};
+localStream.getTracks().forEach(track => {
+  localPeerConnection.addTrack(track, localStream);
+});
+
+// Start call
+startCallButton.onclick = () => {
+  // Create and initialize remote peer connection
+  remotePeerConnection = new RTCPeerConnection();
+  remotePeerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      console.log('Remote ICE candidate:', event.candidate);
+      localPeerConnection.addIceCandidate(event.candidate);
+    }
+  };
+  remotePeerConnection.ontrack = (event) => {
+    console.log('Remote track:', event.track);
+    remoteVideo.srcObject = event.streams[0];
+    remoteStream = event.streams[0];
+  };
+
+  // Add local stream to local peer connection
+  localStream.getTracks().forEach(track => {
+    remotePeerConnection.addTrack(track, localStream);
+  });
+
+  // Create offer and set as local description
+  localPeerConnection.createOffer().then((offer) => {
+    console.log('Local offer:', offer);
+    localPeerConnection.setLocalDescription(offer);
+    remotePeerConnection.setRemoteDescription(offer);
+    
+    // Create answer and set as remote description
+    remotePeerConnection.createAnswer().then((answer) => {
+      console.log('Remote answer:', answer);
+      remotePeerConnection.setLocalDescription(answer);
+      localPeerConnection.setRemoteDescription(answer);
+    }).catch((error) => {
+      console.error('Error creating remote answer:', error);
+    });
+
+    </script>
+    
   </body>
 </html>
