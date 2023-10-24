@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Video Chat</title>
+</head>
+
+<body>
+    <h1>Video Chat</h1>
+
+    <div id="localVideoContainer">
+        <h2>Your Camera</h2>
+        <video id="localVideo" autoplay muted></video>
+    </div>
+
+    <div id="remoteVideoContainer">
+        <h2>Remote User's Camera</h2>
+        <video id="remoteVideo" autoplay></video>
+    </div>
+
+    <button id="skipButton">Skip</button>
+
+    <script>
+        let peerConnection; // Variable to store the current peer connection
+
+        // Function to set up user's local video stream
+        async function setupLocalVideo() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const localVideo = document.getElementById('localVideo');
+            localVideo.srcObject = stream;
+        }
+
+        // Function to create and configure a peer connection
+        function createPeerConnection() {
+            const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+            const pc = new RTCPeerConnection(configuration);
+
+            const localVideoStream = document.getElementById('localVideo').srcObject;
+            localVideoStream.getTracks().forEach(track => pc.addTrack(track, localVideoStream));
+
+            pc.ontrack = event => {
+                const remoteVideo = document.getElementById('remoteVideo');
+                remoteVideo.srcObject = event.streams[0];
+            };
+
+            return pc;
+        }
+
+        // Function to initiate the video call
+        async function startCall() {
+            peerConnection = createPeerConnection();
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            // Send the offer to the other user (you can implement this part separately).
+
+            // For the sake of this example, we'll assume you have received the remote user's answer.
+
+            // Set the remote description with the answer from the other user (you can implement this part separately).
+            // Example: peerConnection.setRemoteDescription(answer);
+
+            // Now, the video call is established, and you can start sending and receiving video.
+        }
+
+        // Function to skip the current user and receive another user's camera output
+        function skipUser() {
+            if (peerConnection) {
+                // Close the current peer connection and stop the video streams
+                peerConnection.close();
+            }
+
+            // Create a new peer connection for the next user
+            startCall();
+        }
+
+        // Initialize the local video when the page loads
+        setupLocalVideo();
+
+        // Attach the skipUser function to the "Skip" button
+        document.getElementById('skipButton').addEventListener('click', skipUser);
+    </script>
+</body>
+
+</html>
